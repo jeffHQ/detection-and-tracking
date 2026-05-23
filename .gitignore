@@ -1,0 +1,42 @@
+# --- Datos del Laboratorio (VisDrone) ---
+# Ignora la carpeta completa donde guardas las secuencias de fotos
+data/
+
+# Por seguridad, ignora cualquier archivo pesado de imagen o video en el proyecto
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+*.gif
+
+# --- Resultados del Tracker ---
+# Ignora los archivos de texto que genera tu código (los outputs)
+outputs/
+
+# --- Modelos y Pesos de Redes Neuronales ---
+# Ignora los archivos .pt que descarga Ultralytics automáticamente (yolo11n.pt, etc.)
+*.pt
+*.pth
+
+# --- Entornos Virtuales y Python ---
+# Ignora carpetas de entornos virtuales si usas venv, conda o poetry
+env/
+venv/
+.venv/
+ENV/
+build/
+devel/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# --- Configuraciones del Sistema o IDEs ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

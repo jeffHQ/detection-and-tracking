@@ -1,0 +1,18 @@
+# --- Núcleo de Visión y Modelos ---
+ultralytics>=8.3.0       # Contiene YOLOv11, YOLO26 y RT-DETR
+opencv-python>=4.8.0     # Procesamiento de imágenes y renderizado visual
+
+# --- Estructuras de Datos y Operaciones ---
+numpy>=1.23.5
+scipy>=1.10.0            # Requerido para algoritmos de optimización (como el método de Hungría)
+filterpy>=1.4.5          # Requerido para el Filtro de Kalman en SORT
+
+# --- Detección en Alta Resolución ---
+sahi>=0.11.15            # Slicing Aided Hyper Inference para objetos pequeños
+
+# --- Evaluación de Tracking ---
+motmetrics>=1.4.0        # Cálculo de MOTA, IDF1, ID Switches, etc.
+
+# --- Herramientas de Desarrollo (Opcionales) ---
+tqdm>=4.65.0             # Barras de progreso para el bucle de fotogramas
+matplotlib>=3.7.0        # Por si necesitas graficar tus métricas al final
