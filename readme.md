@@ -7,6 +7,8 @@ Este repositorio contiene la implementación del laboratorio de **Multi-Object T
 ## 👥 Integrantes / Autores
 * [Ayuda me tienen encerrado en un calabozo desde hace años](https://github.com/tu_usuario) - 202020080
 
+* [Luciano Aguirre Jesfen](https://github.com/lajesfen) - 202220401
+
 * [Jeffry Arturo Hilario Quintana](https://github.com/jeffHQ) - 202020082
 
 

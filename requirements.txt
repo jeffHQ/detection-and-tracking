@@ -1,6 +1,7 @@
 # --- Núcleo de Visión y Modelos ---
 ultralytics>=8.3.0       # Contiene YOLOv11, YOLO26 y RT-DETR
 opencv-python>=4.8.0     # Procesamiento de imágenes y renderizado visual
+supervision>=0.28.0
 
 # --- Estructuras de Datos y Operaciones ---
 numpy>=1.23.5
