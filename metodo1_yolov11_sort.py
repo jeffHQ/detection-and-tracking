@@ -76,6 +76,3 @@ def procesar_secuencia_sort(path_secuencia, path_salida_txt):
     with open(path_salida_txt, "w") as archivo_txt:
         archivo_txt.writelines(lineas_resultado_mot)
     print(f"✅ Archivo de texto actualizado correctamente.")
-
-if __name__ == "__main__":
-    procesar_secuencia_sort("data/uav0000117_02622_v", "outputs/metodo1_sort/uav0000117_02622_v.txt")

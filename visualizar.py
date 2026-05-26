@@ -5,7 +5,7 @@ import cv2
 def generar_video_tracking(path_secuencia, path_txt_resultados, video_salida_mp4):
     print(f"🎬 Generando video para la secuencia: {os.path.basename(path_secuencia)}")
     
-    # 1. Cargar las anotaciones generadas por tu Método 1 en un diccionario
+    # 1. Cargar las anotaciones generadas por tu Método en un diccionario
     # Estructura: { frame_id: [[id, x, y, w, h, clase], ...] }
     tracking_por_frame = {}
     if not os.path.exists(path_txt_resultados):
@@ -75,11 +75,3 @@ def generar_video_tracking(path_secuencia, path_txt_resultados, video_salida_mp4
         
     video_writer.release()
     print(f"✅ ¡Video guardado con éxito en! 🎥 {video_salida_mp4}")
-
-# --- Bloque ejecutor ---
-if __name__ == "__main__":
-    secuencia = "data/uav0000117_02622_v"
-    txt_origen = "outputs/metodo1_sort/uav0000117_02622_v.txt"
-    video_destino = "outputs/metodo1_sort/uav0000117_02622_v_resultado.mp4"
-    
-    generar_video_tracking(secuencia, txt_origen, video_destino)
