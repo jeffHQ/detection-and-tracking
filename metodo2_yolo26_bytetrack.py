@@ -11,8 +11,8 @@ def procesar_secuencia_bytetrack(path_secuencia, path_salida_txt):
     model = YOLO("yolo26n.pt")
     tracker = sv.ByteTrack(
         track_activation_threshold=0.25,
-        lost_track_buffer=30,
-        minimum_matching_threshold=0.8,
+        lost_track_buffer=50,
+        minimum_matching_threshold=0.95,
         frame_rate=30,
     )
 
@@ -29,7 +29,7 @@ def procesar_secuencia_bytetrack(path_secuencia, path_salida_txt):
         frame_id = idx + 1
         img = cv2.imread(path_img)
 
-        predicciones = model(img, conf=0.1, verbose=False)[0]
+        predicciones = model(img, conf=0.15, imgsz=1024, verbose=False)[0]
 
         boxes_xyxy = []
         confianzas = []

@@ -124,15 +124,6 @@ def evaluar(
     if tiempo_proceso_seg and n_frames:
         fps = round(n_frames / tiempo_proceso_seg, 2)
 
-    # Reporte
-    print(f"\n{'─'*40}")
-    print(f"  MOTA        : {mota * 100:.2f}%")
-    print(f"  IDF1        : {idf1 * 100:.2f}%")
-    print(f"  ID Switches : {ids}")
-    if fps is not None:
-        print(f"  FPS         : {fps}")
-    print(f"{'─'*40}\n")
-
     return {"mota": mota, "idf1": idf1, "id_switches": ids, "fps": fps}
 
 
@@ -160,29 +151,3 @@ def calcular_iou(bbox_a: list, bbox_b: list) -> float:
     union  = area_a + area_b - inter
 
     return inter / union if union > 0 else 0.0
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Medir tiempo de proceso (wrapper)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def procesar_y_medir(fn_proceso, *args, **kwargs):
-    """
-    Ejecuta fn_proceso(*args) midiendo el tiempo total.
-    Retorna (tiempo_seg, n_frames).
-
-    Uso:
-        tiempo, n_frames = procesar_y_medir(metodo2, secuencia, txt)
-        evaluar(path_gt, txt, tiempo, n_frames)
-    """
-    import glob
-    secuencia = args[0]
-    n_frames  = len(glob.glob(os.path.join(secuencia, "img1", "*.jpg")))
-
-    inicio = time.perf_counter()
-    fn_proceso(*args, **kwargs)
-    fin    = time.perf_counter()
-
-    tiempo = fin - inicio
-    print(f"⏱️  Tiempo total: {tiempo:.2f}s  |  Frames: {n_frames}")
-    return tiempo, n_frames
