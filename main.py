@@ -3,6 +3,7 @@ import glob
 import os
 from metodo1_yolov11_sort import procesar_secuencia_sort
 from metodo2_yolo26_bytetrack import procesar_secuencia_bytetrack
+from metodo4_sahi_yolo26_bytetrack import procesar_secuencia_sahi_bytetrack
 from metricas import evaluar
 from visualizar import generar_video_tracking
 
@@ -18,10 +19,11 @@ VIDEO_LIST = [
 METHODS = [
     {"name": "metodo1_sort",      "function": procesar_secuencia_sort},
     {"name": "metodo2_bytetrack", "function": procesar_secuencia_bytetrack},
+    {"name": "metodo4_sahi",      "function": procesar_secuencia_sahi_bytetrack},
 ]
 
 if __name__ == "__main__":
-    metodo = 1
+    metodo = 2
 
     resultados = []
 

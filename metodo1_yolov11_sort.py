@@ -5,6 +5,25 @@ import numpy as np
 from ultralytics import YOLO
 from sort import Sort
 
+def calcular_iou_xyxy(box_a, box_b):
+    ax1, ay1, ax2, ay2 = box_a
+    bx1, by1, bx2, by2 = box_b
+
+    inter_x1 = max(ax1, bx1)
+    inter_y1 = max(ay1, by1)
+    inter_x2 = min(ax2, bx2)
+    inter_y2 = min(ay2, by2)
+
+    inter_w = max(0.0, inter_x2 - inter_x1)
+    inter_h = max(0.0, inter_y2 - inter_y1)
+    inter = inter_w * inter_h
+
+    area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
+    area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
+    union = area_a + area_b - inter
+
+    return inter / union if union > 0 else 0.0
+
 def procesar_secuencia_sort(path_secuencia, path_salida_txt):
     print(f"\n🚀 Procesando secuencia: {os.path.basename(path_secuencia)}")
     
@@ -20,13 +39,14 @@ def procesar_secuencia_sort(path_secuencia, path_salida_txt):
         return
 
     lineas_resultado_mot = []
+    id_a_clase = {}
 
     for idx, path_img in enumerate(imagenes):
         frame_id = idx + 1
         img = cv2.imread(path_img)
         
-        # Ejecutar inferencia con un umbral de confianza accesible (conf=0.25)
-        predicciones = model(img, conf=0.25, verbose=False)[0]
+        # Ejecutar inferencia con mayor resolución para objetos pequeños.
+        predicciones = model(img, conf=0.35, imgsz=1024, verbose=False)[0]
         
         detecciones_para_tracker = []
         
@@ -59,17 +79,24 @@ def procesar_secuencia_sort(path_secuencia, path_salida_txt):
         # Guardar resultados
         for trk in tracks_actualizados:
             x1, y1, x2, y2, obj_id = trk
+            obj_id = int(obj_id)
             bb_left = max(0, x1)
             bb_top = max(0, y1)
             bb_width = max(1, x2 - x1)
             bb_height = max(1, y2 - y1)
-            
-            # Recuperar la clase real comparando la posición con nuestras detecciones originales
-            clase_mot = 4  # Por defecto carro
-            if bb_width < bb_height:
-                clase_mot = 1  # Aproximación por aspecto si es más alto que ancho (Peatón)
-            
-            linea_mot = f"{frame_id},{int(obj_id)},{bb_left:.2f},{bb_top:.2f},{bb_width:.2f},{bb_height:.2f},1.0,{clase_mot},1\n"
+
+            clase_mot = id_a_clase.get(obj_id, 4)
+            mejor_iou = 0.0
+            for det in detecciones_para_tracker:
+                iou = calcular_iou_xyxy([x1, y1, x2, y2], det[:4])
+                if iou > mejor_iou:
+                    mejor_iou = iou
+                    clase_mot = int(det[5])
+
+            if mejor_iou > 0:
+                id_a_clase[obj_id] = clase_mot
+
+            linea_mot = f"{frame_id},{obj_id},{bb_left:.2f},{bb_top:.2f},{bb_width:.2f},{bb_height:.2f},1.0,{clase_mot},1\n"
             lineas_resultado_mot.append(linea_mot)
 
     os.makedirs(os.path.dirname(path_salida_txt), exist_ok=True)

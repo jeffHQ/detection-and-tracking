@@ -29,7 +29,7 @@ def procesar_secuencia_bytetrack(path_secuencia, path_salida_txt):
         frame_id = idx + 1
         img = cv2.imread(path_img)
 
-        predicciones = model(img, conf=0.15, imgsz=1024, verbose=False)[0]
+        predicciones = model(img, conf=0.10, imgsz=1024, verbose=False)[0]
 
         boxes_xyxy = []
         confianzas = []
