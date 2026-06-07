@@ -33,6 +33,10 @@ class Perfil:
     fuse_iou: float = 0.55
     max_det: int = 300
 
+    # Filtros anti-ruido, útiles sobre todo para low confidence.
+    min_side: float = 3.0
+    min_area: float = 0.0
+
 
 def perfil_base():
     return Perfil(
@@ -45,6 +49,8 @@ def perfil_base():
         use_sahi=False,
         fuse_iou=0.55,
         max_det=250,
+        min_side=3.0,
+        min_area=0.0,
     )
 
 
@@ -64,44 +70,60 @@ def perfil_sahi_0182():
         use_sahi=True,
         fuse_iou=0.48,
         max_det=260,
+        min_side=3.0,
+        min_area=0.0,
     )
 
 
 def perfil_sahi_0268():
     return Perfil(
-        mode="sahi_0268_final_960",
+        mode="sahi_0268_stride3",
         imgsz=1280,
         yolo_conf=0.08,
         sahi_conf=0.11,
         slice_size=960,
         overlap=0.20,
-        stride=4,
-        warmup=12,
+
+        # Cambio por pruebas:
+        # stride=3 mejoró MOTA~/IDF1~/Recall frente a stride=4.
+        stride=3,
+        warmup=15,
+
         track_thr=0.20,
         match_thr=0.90,
         buffer=90,
         use_sahi=True,
         fuse_iou=0.50,
-        max_det=220,
+        max_det=240,
+        min_side=3.0,
+        min_area=0.0,
     )
 
 
-def perfil_sahi_0305():
+def perfil_yolo_0305():
     return Perfil(
-        mode="sahi_0305_final",
+        mode="yolo_lowconf_0305",
         imgsz=1280,
-        yolo_conf=0.07,
-        sahi_conf=0.09,
+
+        # Cambio por pruebas:
+        # YOLO low confidence sin SAHI fue ligeramente mejor y mucho más rápido.
+        yolo_conf=0.03,
+
+        sahi_conf=0.0,
         slice_size=768,
         overlap=0.20,
-        stride=4,
-        warmup=8,
-        track_thr=0.16,
+        stride=999999,
+        warmup=0,
+        track_thr=0.15,
         match_thr=0.88,
         buffer=100,
-        use_sahi=True,
-        fuse_iou=0.48,
-        max_det=250,
+        use_sahi=False,
+        fuse_iou=0.55,
+        max_det=400,
+
+        # Filtro para evitar que el low-conf meta cajas demasiado pequeñas.
+        min_side=8.0,
+        min_area=100.0,
     )
 
 
@@ -113,7 +135,7 @@ def elegir_perfil(nombre_seq):
         return perfil_sahi_0268()
 
     if "uav0000305" in nombre_seq:
-        return perfil_sahi_0305()
+        return perfil_yolo_0305()
 
     return perfil_base()
 
@@ -161,7 +183,7 @@ def sahi_a_sv(pred):
 
         x1, y1, x2, y2 = [float(v) for v in p.bbox.to_xyxy()]
 
-        if x2 - x1 < 3 or y2 - y1 < 3:
+        if x2 <= x1 or y2 <= y1:
             continue
 
         boxes.append([x1, y1, x2, y2])
@@ -248,6 +270,31 @@ def nms_clase(det, thr):
     )
 
 
+def filtrar_detecciones(det, perfil):
+    if len(det) == 0:
+        return det
+
+    boxes = det.xyxy
+    w = boxes[:, 2] - boxes[:, 0]
+    h = boxes[:, 3] - boxes[:, 1]
+    area = w * h
+
+    keep = (
+        (w >= perfil.min_side)
+        & (h >= perfil.min_side)
+        & (area >= perfil.min_area)
+    )
+
+    if keep.sum() == 0:
+        return sv.Detections.empty()
+
+    return sv.Detections(
+        xyxy=det.xyxy[keep],
+        confidence=det.confidence[keep],
+        class_id=det.class_id[keep],
+    )
+
+
 def limitar(det, max_det):
     if len(det) <= max_det:
         return det
@@ -270,6 +317,7 @@ def detectar_frame(img, frame_id, yolo_model, sahi_model, perfil):
     )[0]
 
     det = yolo_a_sv(pred_yolo)
+    det = filtrar_detecciones(det, perfil)
 
     usar_sahi = (
         perfil.use_sahi
@@ -290,10 +338,7 @@ def detectar_frame(img, frame_id, yolo_model, sahi_model, perfil):
             overlap_width_ratio=perfil.overlap,
             perform_standard_pred=False,
 
-            # Esto quita el warning de SAHI.
-            # Antes usábamos GREEDYNMM + IOS, pero con sahi_conf bajo
-            # SAHI lo cambiaba automáticamente a NMS + IOU.
-            # Ahora lo dejamos explícito.
+            # Evita warning de SAHI con thresholds bajos.
             postprocess_type="NMS",
             postprocess_match_metric="IOU",
 
@@ -303,9 +348,14 @@ def detectar_frame(img, frame_id, yolo_model, sahi_model, perfil):
         )
 
         det_sahi = sahi_a_sv(pred_sahi)
-        det = nms_clase(unir(det, det_sahi), perfil.fuse_iou)
+        det_sahi = filtrar_detecciones(det_sahi, perfil)
 
-    return limitar(det, perfil.max_det)
+        det = unir(det, det_sahi)
+        det = nms_clase(det, perfil.fuse_iou)
+
+    det = limitar(det, perfil.max_det)
+
+    return det
 
 
 def crear_sahi_model(perfil):
@@ -323,7 +373,7 @@ def crear_sahi_model(perfil):
 
 def procesar_secuencia_sahi_bytetrack(path_secuencia, path_salida_txt):
     nombre_seq = os.path.basename(path_secuencia)
-    print(f"\n🚀 Procesando secuencia con SAHI FINAL: {nombre_seq}")
+    print(f"\n🚀 Procesando secuencia con SAHI FINAL AJUSTADO: {nombre_seq}")
 
     carpeta_img1 = os.path.join(path_secuencia, "img1")
     imagenes = sorted(glob.glob(os.path.join(carpeta_img1, "*.jpg")))
@@ -345,7 +395,9 @@ def procesar_secuencia_sahi_bytetrack(path_secuencia, path_salida_txt):
         f"warmup={perfil.warmup} | "
         f"track_thr={perfil.track_thr} | "
         f"match_thr={perfil.match_thr} | "
-        f"buffer={perfil.buffer}"
+        f"buffer={perfil.buffer} | "
+        f"min_side={perfil.min_side} | "
+        f"min_area={perfil.min_area}"
     )
 
     yolo_model = YOLO("yolo26n.pt")
