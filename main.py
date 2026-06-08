@@ -4,6 +4,7 @@ import os
 
 from metodo1_yolov11_sort import procesar_secuencia_sort
 from metodo2_yolo26_bytetrack import procesar_secuencia_bytetrack
+from metodo3_rtdetr_botsort import procesar_secuencia_rtdetr_botsort
 from metodo4_sahi_yolo26_bytetrack import procesar_secuencia_sahi_bytetrack
 from metricas import evaluar
 from visualizar import generar_video_tracking
@@ -19,26 +20,25 @@ VIDEO_LIST = [
 ]
 
 METHODS = [
-    {"name": "metodo1_sort",      "function": procesar_secuencia_sort},
-    {"name": "metodo2_bytetrack", "function": procesar_secuencia_bytetrack},
-    {"name": "metodo4_sahi",      "function": procesar_secuencia_sahi_bytetrack},
+    {"name": "metodo1_sort",       "function": procesar_secuencia_sort},
+    {"name": "metodo2_bytetrack",  "function": procesar_secuencia_bytetrack},
+    {"name": "metodo3_rtdetr_bot", "function": procesar_secuencia_rtdetr_botsort},
+    {"name": "metodo4_sahi",       "function": procesar_secuencia_sahi_bytetrack},
 ]
 
-# Videos que quieres mostrar en la presentación para el método 4.
-# 0182 y 0268 usan SAHI.
-# 0305 es un caso difícil donde el análisis mostró que era mejor NO usar SAHI.
 VIDEOS_DEMO_METODO4 = [
-    "uav0000182_00000_v",   # mejor caso con SAHI
-    "uav0000305_00000_v",   # caso difícil: YOLO low-conf sin SAHI
-    "uav0000268_05773_v",   # caso difícil con SAHI en alta resolución
+    "uav0000182_00000_v",
+    "uav0000268_05773_v",
 ]
 
 
 if __name__ == "__main__":
     # 0 = metodo1_sort
     # 1 = metodo2_bytetrack
-    # 2 = metodo4_sahi
-    metodo = 2
+    # 2 = metodo3_rtdetr_bot
+    # 3 = metodo4_sahi
+
+    metodo = 0  # cambia a 3 si quieres correr metodo4_sahi
 
     nombre_metodo = METHODS[metodo]["name"]
     funcion_metodo = METHODS[metodo]["function"]
@@ -59,7 +59,6 @@ if __name__ == "__main__":
 
         print(f"⏱️  Tiempo total: {tiempo:.2f}s  |  Frames: {n_frames}")
 
-        # Generar videos solo para los casos que vas a mostrar en la presentación.
         if nombre_metodo == "metodo4_sahi" and video in VIDEOS_DEMO_METODO4:
             print(f"🎬 Generando video demo para presentación: {video}")
             generar_video_tracking(secuencia, txt, mp4)
